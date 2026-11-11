@@ -1,0 +1,1059 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>打字機偵探</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Courier+Prime:ital,wght@0,400;0,700;1,400&display=swap');
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      user-select: none;
+    }
+    
+    body {
+      min-height: 100vh;
+      font-family: 'Courier Prime', "Courier New", "PingFang TC", "Microsoft JhengHei", monospace;
+      background: radial-gradient(circle at center, #2c1d11 0%, #0d0805 100%);
+      color: #2c1a0e;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 20px 10px;
+    }
+
+    #game-container {
+      width: 100%;
+      max-width: 960px;
+      background: #24170e linear-gradient(135deg, rgba(255,255,255,0.03) 0%, rgba(0,0,0,0.5) 100%);
+      border: 12px solid #3a2517;
+      border-image: linear-gradient(to bottom, #543722, #21130a) 1;
+      box-shadow: 0 20px 50px rgba(0,0,0,0.95), inset 0 0 20px rgba(0,0,0,0.8);
+      display: flex;
+      flex-direction: column;
+      position: relative;
+      padding: 20px;
+      border-radius: 10px;
+    }
+
+    header {
+      min-height: 55px;
+      background: linear-gradient(to bottom, #3d291a 0%, #22150c 100%);
+      border-radius: 8px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0 20px;
+      color: #e5c390;
+      border: 1px solid #5d3d26;
+      box-shadow: 0 3px 8px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.1);
+      margin-bottom: 15px;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .title {
+      font-size: 1.3rem;
+      font-weight: 700;
+      letter-spacing: 2px;
+      color: #f3d7a8;
+      text-shadow: 1px 1px 3px #000;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .status-bar {
+      display: flex;
+      gap: 15px;
+      align-items: center;
+    }
+
+    .history-btn {
+      background: linear-gradient(to bottom, #7a5833 0%, #543b20 100%);
+      color: #f3d7a8;
+      border: 1px solid #9e8156;
+      padding: 5px 12px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 0.85rem;
+      font-weight: bold;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.4);
+      transition: all 0.15s;
+    }
+
+    .history-btn:hover {
+      background: linear-gradient(to bottom, #8e683e 0%, #664828 100%);
+      color: #ffffff;
+    }
+
+    .stage-badge {
+      background: #140b06;
+      padding: 5px 14px;
+      border-radius: 12px;
+      border: 1px solid #755033;
+      color: #d4af37;
+      font-size: 0.95rem;
+      font-weight: bold;
+      letter-spacing: 1px;
+    }
+
+    .lives {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      font-size: 0.95rem;
+      color: #d8be98;
+    }
+
+    .ink-bottle {
+      width: 18px;
+      height: 24px;
+      background: radial-gradient(circle at 30% 30%, #da4a32, #801d0f);
+      border-radius: 4px 4px 8px 8px;
+      border: 1px solid #ffe3d8;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.6), inset 0 0 3px rgba(255,255,255,0.4);
+      display: inline-block;
+      transition: all 0.4s ease;
+      position: relative;
+    }
+
+    .ink-bottle::before {
+      content: '';
+      position: absolute;
+      top: -4px;
+      left: 3px;
+      width: 10px;
+      height: 4px;
+      background: #8e633d;
+      border-radius: 2px;
+      border: 1px solid #4a301e;
+    }
+
+    .ink-bottle.empty {
+      background: #2a1f18;
+      border-color: #4a382c;
+      box-shadow: none;
+      opacity: 0.3;
+    }
+
+    /* 遊戲封面畫面 */
+    #cover-stage {
+      background: #eee0bd url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" opacity="0.06"><filter id="n"><feTurbulence type="fractalNoise" baseFrequency="0.8" numOctaves="3"/></filter><rect width="100" height="100" filter="url(%23n)"/></svg>');
+      border-radius: 8px;
+      border: 4px solid #b39360;
+      box-shadow: inset 0 0 35px rgba(112, 76, 32, 0.4), 0 8px 20px rgba(0,0,0,0.6);
+      padding: 30px 20px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+      min-height: 480px;
+      margin-bottom: 20px;
+    }
+
+    .cover-title {
+      font-size: 2.4rem;
+      font-weight: bold;
+      color: #2b1a0e;
+      margin-bottom: 8px;
+      letter-spacing: 3px;
+      text-shadow: 1px 1px 0 rgba(255,255,255,0.6);
+    }
+
+    .cover-subtitle {
+      font-size: 1.1rem;
+      color: #7a5833;
+      margin-bottom: 25px;
+      font-weight: bold;
+    }
+
+    .cover-desc {
+      max-width: 650px;
+      background: rgba(255, 255, 255, 0.5);
+      border: 1px dashed #b89a70;
+      border-radius: 8px;
+      padding: 15px 20px;
+      font-size: 0.95rem;
+      color: #4a3423;
+      line-height: 1.6;
+      margin-bottom: 30px;
+      text-align: left;
+    }
+
+    .start-btn {
+      background: linear-gradient(to bottom, #8c673b 0%, #634724 100%);
+      color: #f7ebd0;
+      border: 2px solid #422f18;
+      padding: 14px 40px;
+      font-size: 1.2rem;
+      font-weight: bold;
+      border-radius: 8px;
+      cursor: pointer;
+      box-shadow: 0 5px 0 #2b1e0f, 0 8px 15px rgba(0,0,0,0.4);
+      transition: all 0.15s;
+    }
+
+    .start-btn:hover {
+      background: linear-gradient(to bottom, #9e7645 0%, #73532c 100%);
+      transform: translateY(-2px);
+    }
+
+    .start-btn:active {
+      transform: translateY(3px);
+      box-shadow: 0 2px 0 #2b1e0f;
+    }
+
+    /* 遊戲主畫面（第一到三關） */
+    #paper-stage {
+      display: none;
+      background: #eee0bd url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" opacity="0.06"><filter id="n"><feTurbulence type="fractalNoise" baseFrequency="0.8" numOctaves="3"/></filter><rect width="100" height="100" filter="url(%23n)"/></svg>');
+      border-radius: 8px;
+      border: 4px solid #b39360;
+      box-shadow: inset 0 0 35px rgba(112, 76, 32, 0.4), 0 8px 20px rgba(0,0,0,0.6);
+      padding: 25px;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      position: relative;
+      text-align: center;
+      min-height: 280px;
+      margin-bottom: 20px;
+    }
+
+    .stage-hint {
+      font-size: 1rem;
+      color: #5c3f20;
+      margin-bottom: 12px;
+      font-weight: 700;
+      letter-spacing: 1px;
+    }
+
+    .translation-hint {
+      font-size: 1.25rem;
+      font-weight: bold;
+      color: #8b1e0f;
+      margin-bottom: 15px;
+      background: rgba(184, 52, 34, 0.08);
+      padding: 8px 20px;
+      border-radius: 6px;
+      border-left: 5px solid #b83422;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+      display: inline-block;
+    }
+
+    .target-box {
+      font-size: 2.2rem;
+      font-weight: 700;
+      letter-spacing: 3px;
+      color: #1a1009;
+      background: rgba(255, 255, 255, 0.65);
+      padding: 16px 32px;
+      border-radius: 8px;
+      border: 2px dashed #9e8156;
+      box-shadow: 0 3px 10px rgba(0,0,0,0.08);
+      word-break: break-all;
+      max-width: 95%;
+    }
+
+    .char-correct { color: #1c6821; font-weight: bold; }
+    .char-current { text-decoration: underline; background: #fde088; color: #000; border-radius: 2px; }
+    .char-pending { color: #8c8275; }
+
+    /* 線索統整筆記區塊 */
+    #clues-summary-container {
+      display: none;
+      width: 100%;
+      background: rgba(255, 255, 255, 0.55);
+      border: 2px dashed #8c6a43;
+      border-radius: 8px;
+      padding: 12px 18px;
+      margin-bottom: 15px;
+      text-align: left;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+    }
+
+    .clues-summary-title {
+      font-weight: bold;
+      color: #7a2818;
+      font-size: 0.95rem;
+      margin-bottom: 8px;
+      border-bottom: 1px solid #c8b282;
+      padding-bottom: 4px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .clues-summary-list {
+      list-style-type: none;
+      font-size: 0.85rem;
+      color: #3d2b1f;
+      line-height: 1.5;
+    }
+
+    .clues-summary-list li {
+      margin-bottom: 4px;
+      font-weight: 600;
+    }
+
+    #suspects-gallery {
+      display: none;
+      width: 100%;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 15px;
+      align-items: stretch;
+    }
+
+    .suspect-card {
+      background: #ebd8aa linear-gradient(135deg, #f5e9c9 0%, #dabf88 100%);
+      border: 5px solid #6e4d27;
+      outline: 2px solid #382310;
+      border-radius: 8px;
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: space-between;
+      cursor: pointer;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.4);
+      transition: all 0.25s ease;
+      position: relative;
+    }
+
+    .suspect-card:hover {
+      transform: translateY(-6px) scale(1.02);
+      box-shadow: 0 12px 30px rgba(0,0,0,0.6);
+      border-color: #a82c1a;
+      background: #fff4d4;
+    }
+
+    .suspect-card::before {
+      content: 'POLICE CASE FILE';
+      position: absolute;
+      top: 6px;
+      right: 10px;
+      font-size: 0.6rem;
+      font-weight: bold;
+      color: rgba(112, 79, 40, 0.5);
+      letter-spacing: 1px;
+    }
+
+    .portrait-frame {
+      width: 100%;
+      height: 200px;
+      border: 3px solid #54381d;
+      border-radius: 6px;
+      background: #2b1d14;
+      overflow: hidden;
+      box-shadow: inset 0 0 12px rgba(0,0,0,0.7);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      margin-top: 15px;
+    }
+
+    .suspect-portrait {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+    }
+
+    .suspect-name {
+      font-weight: 700;
+      font-size: 1.1rem;
+      color: #2b1a0e;
+      border-bottom: 2px solid #b89a70;
+      padding-bottom: 4px;
+      margin: 10px 0 8px 0;
+      width: 100%;
+    }
+
+    .suspect-desc {
+      font-size: 0.82rem;
+      color: #4a3423;
+      text-align: left;
+      width: 100%;
+      line-height: 1.4;
+      font-weight: 600;
+      background: rgba(255,255,255,0.45);
+      padding: 8px 10px;
+      border-radius: 6px;
+      border: 1px dashed #c0a375;
+    }
+
+    #typewriter {
+      background: linear-gradient(to bottom, #1c120a 0%, #0d0703 100%);
+      border-radius: 10px;
+      border: 4px solid #3d281a;
+      box-shadow: inset 0 3px 12px rgba(0,0,0,0.9), 0 6px 15px rgba(0,0,0,0.6);
+      padding: 18px 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .keyboard-row {
+      display: flex;
+      justify-content: center;
+      gap: 8px;
+    }
+
+    .key {
+      width: 46px;
+      height: 46px;
+      background: radial-gradient(circle at 35% 35%, #f7ebd0 0%, #cfb584 100%);
+      border: 2px solid #59412d;
+      border-radius: 50%;
+      color: #1a1008;
+      font-weight: 700;
+      font-size: 1.05rem;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      box-shadow: 0 5px 0 #0d0805, inset 0 1px 2px rgba(255,255,255,0.8);
+      transition: all 0.06s ease;
+      cursor: pointer;
+    }
+
+    .key.space {
+      width: 260px;
+      border-radius: 20px;
+    }
+
+    .key.active {
+      transform: translateY(3px);
+      box-shadow: 0 1px 0 #0d0805, inset 0 1px 4px rgba(0,0,0,0.4);
+      background: #b83422;
+      color: #fff;
+      border-color: #6e1c11;
+    }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      margin-bottom: 15px;
+    }
+
+    .stat-box {
+      background: rgba(140, 106, 67, 0.12);
+      padding: 10px;
+      border-radius: 8px;
+      border: 1px dashed #b89a70;
+    }
+
+    .stat-value {
+      font-size: 1.5rem;
+      font-weight: bold;
+      color: #8b1e0f;
+    }
+
+    .stat-label {
+      font-size: 0.8rem;
+      color: #5c3f20;
+      font-weight: bold;
+    }
+
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(10, 5, 2, 0.88);
+      backdrop-filter: blur(4px);
+      justify-content: center;
+      align-items: center;
+      z-index: 100;
+    }
+
+    .modal-content {
+      background: #f1e4c3 linear-gradient(135deg, #f8efd8 0%, #e3d2a6 100%);
+      border: 5px solid #7a5833;
+      border-radius: 12px;
+      padding: 30px;
+      width: 90%;
+      max-width: 500px;
+      text-align: center;
+      box-shadow: 0 15px 40px rgba(0,0,0,0.8), inset 0 0 20px rgba(122, 88, 51, 0.2);
+    }
+
+    .modal h2 { font-size: 1.6rem; color: #2b1a0e; margin-bottom: 12px; font-weight: bold; }
+
+    .btn {
+      background: linear-gradient(to bottom, #8c673b 0%, #634724 100%);
+      color: #f7ebd0;
+      border: 1px solid #422f18;
+      padding: 12px 28px;
+      font-size: 1.05rem;
+      font-weight: bold;
+      border-radius: 6px;
+      cursor: pointer;
+      box-shadow: 0 4px 0 #2b1e0f;
+      transition: all 0.1s;
+    }
+
+    .btn:hover { background: linear-gradient(to bottom, #9e7645 0%, #73532c 100%); }
+    .btn:active { transform: translateY(2px); box-shadow: 0 2px 0 #2b1e0f; }
+
+    .shake {
+      animation: shake 0.2s ease-in-out;
+    }
+
+    @keyframes shake {
+      0%, 100% { transform: translateX(0); }
+      25% { transform: translateX(-6px); }
+      75% { transform: translateX(6px); }
+    }
+  </style>
+</head>
+<body>
+
+<div id="game-container">
+  <header>
+    <div class="title">🕵️ 打字機偵探</div>
+    <div class="status-bar">
+      <button class="history-btn" onclick="showHistoryModal()">📜 偵案紀錄</button>
+      <div class="stage-badge" id="stage-indicator" style="display: none;">關卡: 1 / 3</div>
+      <div class="lives" id="lives-display" style="display: none;">
+        墨水存量:
+        <span id="ink-container" style="display: flex; gap: 6px; align-items: center;"></span>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <!-- 遊戲封面頁面 -->
+    <div id="cover-stage">
+      <div class="cover-title">深夜探案：打字機偵探</div>
+      <div class="cover-subtitle">—— 敲擊打字機，還原現場，緝拿真兇 ——</div>
+      
+      <div class="cover-desc">
+        📜 <strong>辦案指南：</strong><br>
+        城裡發生了一宗神祕懸案，警局將案卷交給了你！你需要透過敲擊打字機完成三關調查：<br>
+        • <strong>第一關【現場搜證】</strong>：搜集 10 個基礎字母標籤。<br>
+        • <strong>第二關【證詞整理】</strong>：梳理 10 個關鍵筆錄單字。<br>
+        • <strong>第三關【結案線索】</strong>：打出 5 個關鍵案情短句，根據特徵指認真兇！
+      </div>
+
+      <button class="start-btn" onclick="startGameFromCover()">🔍 開始偵辦案件</button>
+    </div>
+
+    <!-- 遊戲關卡主畫面 -->
+    <div id="paper-stage">
+      <div class="stage-hint" id="stage-hint">第一關：現場搜證（請敲擊對應小寫字母，目標 10 個）</div>
+      
+      <div class="translation-hint" id="translation-display" style="display: none;">翻譯提示</div>
+
+      <div class="target-box" id="target-display">a</div>
+
+      <!-- 線索統整筆記區塊 -->
+      <div id="clues-summary-container">
+        <div class="clues-summary-title">📝 偵探手札：本案搜集到的關鍵線索</div>
+        <ul class="clues-summary-list" id="clues-summary-list">
+          <!-- 動態生成線索句子與翻譯 -->
+        </ul>
+      </div>
+
+      <div id="suspects-gallery">
+        <div class="suspect-card" onclick="chooseCulprit('A')">
+          <div class="portrait-frame">
+            <svg class="suspect-portrait" viewBox="0 0 200 240">
+              <defs>
+                <linearGradient id="bgBaron" x1="0" y1="0" x2="1" y2="1">
+                  <stop offset="0%" stop-color="#4a3728"/>
+                  <stop offset="100%" stop-color="#1f150e"/>
+                </linearGradient>
+                <linearGradient id="cloakGrad" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stop-color="#222225"/>
+                  <stop offset="100%" stop-color="#111113"/>
+                </linearGradient>
+              </defs>
+              <rect width="200" height="240" fill="url(#bgBaron)"/>
+              <path d="M 30 240 C 30 160, 50 140, 100 140 C 150 140, 170 160, 170 240 Z" fill="url(#cloakGrad)"/>
+              <path d="M 75 240 L 75 165 L 100 190 L 125 165 L 125 240 Z" fill="#634731" stroke="#3b2b1d" stroke-width="2"/>
+              <circle cx="100" cy="100" r="45" fill="#f0ca9e"/>
+              <path d="M 55 90 C 55 50, 145 50, 145 90 C 135 60, 65 60, 55 90 Z" fill="#d1d1d1"/>
+              <path d="M 80 115 Q 100 135 120 115 Q 100 125 80 115 Z" fill="#e8e8e8"/>
+              <circle cx="118" cy="95" r="12" fill="none" stroke="#d4af37" stroke-width="2.5"/>
+              <line x1="126" y1="104" x2="140" y2="130" stroke="#d4af37" stroke-width="1.5"/>
+              <circle cx="82" cy="95" r="3.5" fill="#2b1a0e"/>
+              <circle cx="118" cy="95" r="3" fill="#2b1a0e"/>
+              <path d="M 72 86 Q 82 82 92 87" fill="none" stroke="#7d7d7d" stroke-width="3"/>
+              <path d="M 85 118 Q 65 120 55 105" fill="none" stroke="#523824" stroke-width="5"/>
+              <path d="M 50 100 L 60 100 L 58 110 L 52 110 Z" fill="#8c5832"/>
+              <path d="M 52 95 Q 45 80 50 70 T 42 50" fill="none" stroke="#ffffff" stroke-width="2" opacity="0.5"/>
+            </svg>
+          </div>
+          <div class="suspect-name">嫌疑人 A：男爵</div>
+          <div class="suspect-desc">
+            • 戴單眼眼鏡 (Monocle)<br>• 抽煙斗 (Pipe)<br>• 柱木手杖 (Cane)<br>• 穿黑色斗篷 (Cloak)
+          </div>
+        </div>
+
+        <div class="suspect-card" onclick="chooseCulprit('B')">
+          <div class="portrait-frame">
+            <svg class="suspect-portrait" viewBox="0 0 200 240">
+              <defs>
+                <linearGradient id="bgMadam" x1="0" y1="0" x2="1" y2="1">
+                  <stop offset="0%" stop-color="#3d2238"/>
+                  <stop offset="100%" stop-color="#190d18"/>
+                </linearGradient>
+                <linearGradient id="dressGrad" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stop-color="#7a2d75"/>
+                  <stop offset="100%" stop-color="#40143d"/>
+                </linearGradient>
+              </defs>
+              <rect width="200" height="240" fill="url(#bgMadam)"/>
+              <path d="M 35 240 C 35 165, 55 145, 100 145 C 145 145, 165 165, 165 240 Z" fill="url(#dressGrad)"/>
+              <circle cx="100" cy="108" r="40" fill="#fce0c0"/>
+              <path d="M 58 115 C 50 70, 150 70, 142 115 C 150 80, 50 80, 58 115 Z" fill="#362215"/>
+              <path d="M 40 85 Q 100 50 160 85 Q 100 70 40 85 Z" fill="#582163" stroke="#8a379a" stroke-width="2"/>
+              <path d="M 60 75 Q 30 30 70 20 Q 65 45 75 70 Z" fill="#d976e6"/>
+              <circle cx="85" cy="105" r="3.5" fill="#2b1a0e"/>
+              <circle cx="115" cy="105" r="3.5" fill="#2b1a0e"/>
+              <path d="M 90 122 Q 100 128 110 122 Q 100 124 90 122 Z" fill="#b82335"/>
+              <path d="M 115 240 Q 155 170 190 210 Z" fill="#f7e9d7" stroke="#b89a70" stroke-width="1.5"/>
+              <circle cx="135" cy="215" r="4" fill="#c41d33" stroke="#d4af37" stroke-width="1.5"/>
+            </svg>
+          </div>
+          <div class="suspect-name">嫌疑人 B：夫人</div>
+          <div class="suspect-desc">
+            • 戴紅寶石戒指 (Ruby)<br>• 戴紫色帽子 (Hat)<br>• 拿蕾絲扇子 (Fan)<br>• 噴玫瑰香水 (Perfume)
+          </div>
+        </div>
+
+        <div class="suspect-card" onclick="chooseCulprit('C')">
+          <div class="portrait-frame">
+            <svg class="suspect-portrait" viewBox="0 0 200 240">
+              <defs>
+                <linearGradient id="bgButler" x1="0" y1="0" x2="1" y2="1">
+                  <stop offset="0%" stop-color="#262d33"/>
+                  <stop offset="100%" stop-color="#0f1317"/>
+                </linearGradient>
+              </defs>
+              <rect width="200" height="240" fill="url(#bgButler)"/>
+              <path d="M 30 240 L 55 145 L 100 160 L 145 145 L 170 240 Z" fill="#181d21"/>
+              <path d="M 85 160 L 100 240 L 115 160 Z" fill="#ffffff"/>
+              <path d="M 62 95 Q 60 55 100 55 Q 140 55 138 95 L 128 125 Q 100 135 72 125 Z" fill="#ebd0ad"/>
+              <path d="M 60 85 C 65 50, 135 50, 140 85 C 120 58, 80 58, 60 85 Z" fill="#141414"/>
+              <line x1="75" y1="80" x2="90" y2="105" stroke="#9e2b25" stroke-width="3" stroke-linecap="round"/>
+              <circle cx="82" cy="92" r="3" fill="#2b1a0e"/>
+              <circle cx="118" cy="92" r="3" fill="#2b1a0e"/>
+              <path d="M 125 240 C 125 200, 160 200, 165 240 Z" fill="#e0e0e0" stroke="#a1a1a1" stroke-width="2"/>
+              <circle cx="145" cy="210" r="7" fill="#d4af37" stroke="#8c6f1c" stroke-width="1.5"/>
+              <path d="M 145 203 L 145 190" fill="none" stroke="#d4af37" stroke-width="1.5"/>
+            </svg>
+          </div>
+          <div class="suspect-name">嫌疑人 C：管家</div>
+          <div class="suspect-desc">
+            • 戴銀手套 (Silver Gloves)<br>• 左眼有疤痕 (Scar)<br>• 雙排扣西裝 (Suit)<br>• 懷懷金錶 (Watch)
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="typewriter">
+      <div class="keyboard-row">
+        <div class="key" id="key-q">Q</div><div class="key" id="key-w">W</div><div class="key" id="key-e">E</div><div class="key" id="key-r">R</div><div class="key" id="key-t">T</div><div class="key" id="key-y">Y</div><div class="key" id="key-u">U</div><div class="key" id="key-i">I</div><div class="key" id="key-o">O</div><div class="key" id="key-p">P</div>
+      </div>
+      <div class="keyboard-row">
+        <div class="key" id="key-a">A</div><div class="key" id="key-s">S</div><div class="key" id="key-d">D</div><div class="key" id="key-f">F</div><div class="key" id="key-g">G</div><div class="key" id="key-h">H</div><div class="key" id="key-j">J</div><div class="key" id="key-k">K</div><div class="key" id="key-l">L</div>
+      </div>
+      <div class="keyboard-row">
+        <div class="key" id="key-z">Z</div><div class="key" id="key-x">X</div><div class="key" id="key-c">C</div><div class="key" id="key-v">V</div><div class="key" id="key-b">B</div><div class="key" id="key-n">N</div><div class="key" id="key-m">M</div><div class="key" id="key-dot">.</div>
+      </div>
+      <div class="keyboard-row">
+        <div class="key space" id="key-space">SPACE</div>
+      </div>
+    </div>
+  </main>
+
+  <div class="modal" id="modal">
+    <div class="modal-content">
+      <h2 id="modal-title">案件說明</h2>
+      <div id="modal-msg" style="color: #4a3423; margin-bottom: 20px; line-height: 1.5; font-weight: 600;">歡迎來到現場，偵探。請透過打字機記錄線索。</div>
+      <button class="btn" id="modal-btn" onclick="closeModal()">開始偵辦</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  
+  function playClack() {
+    if (audioCtx.state === 'suspended') audioCtx.resume();
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.type = 'triangle';
+    osc.frequency.setValueAtTime(130, audioCtx.currentTime);
+    osc.frequency.exponentialRampToValueAtTime(35, audioCtx.currentTime + 0.04);
+    gain.gain.setValueAtTime(0.35, audioCtx.currentTime);
+    gain.gain.linearRampToValueAtTime(0.01, audioCtx.currentTime + 0.04);
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+    osc.start();
+    osc.stop(audioCtx.currentTime + 0.04);
+  }
+
+  function playError() {
+    if (audioCtx.state === 'suspended') audioCtx.resume();
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.type = 'sawtooth';
+    osc.frequency.setValueAtTime(140, audioCtx.currentTime);
+    gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
+    gain.gain.linearRampToValueAtTime(0.01, audioCtx.currentTime + 0.15);
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+    osc.start();
+    osc.stop(audioCtx.currentTime + 0.15);
+  }
+
+  const poolStage1 = ['a','s','d','f','j','k','l','e','i','o','r','t','g','h','u','b','m','c','w','p','v','q','n','x','z','y','k','r','t','g'];
+  
+  const poolStage2 = [
+    { en: 'clue', zh: '線索' }, { en: 'mark', zh: '痕跡' }, { en: 'lock', zh: '門鎖' },
+    { en: 'time', zh: '時間' }, { en: 'dark', zh: '黑暗' }, { en: 'door', zh: '門戶' },
+    { en: 'coat', zh: '外套' }, { en: 'ring', zh: '戒指' }, { en: 'hat', zh: '帽子' },
+    { en: 'glove', zh: '手套' }, { en: 'cane', zh: '手杖' }, { en: 'pipe', zh: '煙斗' },
+    { en: 'scar', zh: '疤痕' }, { en: 'rose', zh: '玫瑰' }, { en: 'gold', zh: '黃金' },
+    { en: 'suit', zh: '西裝' }, { en: 'mask', zh: '面具' }, { en: 'lace', zh: '蕾絲' },
+    { en: 'watch', zh: '懷錶' }, { en: 'cloak', zh: '斗篷' }, { en: 'poison', zh: '毒藥' },
+    { en: 'victim', zh: '受害者' }, { en: 'guilty', zh: '有罪的' }, { en: 'secret', zh: '秘密' },
+    { en: 'shadow', zh: '陰影' }, { en: 'alibi', zh: '不在場證明' }, { en: 'murder', zh: '謀殺' },
+    { en: 'killer', zh: '兇手' }, { en: 'suspect', zh: '嫌疑人' }, { en: 'witness', zh: '目擊者' }
+  ];
+  
+  const cluesData = {
+    'A': [
+      { en: "The suspect holds a wooden cane.", zh: "嫌疑人手裡拿著一把木製手杖。" },
+      { en: "A shiny monocle was left on the table.", zh: "桌上留著一只閃亮的單眼眼鏡。" },
+      { en: "The smell of pipe smoke fills the room.", zh: "房間裡瀰漫著煙斗的煙味。" },
+      { en: "A long black cloak vanished in the dark.", zh: "一件黑色長斗篷消失在黑暗中。" },
+      { en: "The culprit walked with a heavy cane.", zh: "犯人柱著重重的手杖步行。" },
+      { en: "Smoke from a pipe lingered near the door.", zh: "門口附近殘留著煙斗的煙霧。" }
+    ],
+    'B': [
+      { en: "A red ruby ring dropped on the floor.", zh: "地板上掉落了一枚紅寶石戒指。" },
+      { en: "The scent of sweet rose perfume is strong.", zh: "濃郁的甜美玫瑰香水味撲鼻而來。" },
+      { en: "A purple hat was seen near the window.", zh: "窗戶旁有人看到一頂紫色的帽子。" },
+      { en: "The suspect dropped a fine lace fan.", zh: "嫌疑人掉落了一把精緻的蕾絲扇子。" },
+      { en: "Traces of rose perfume were on the desk.", zh: "書桌上留有玫瑰香水的痕跡。" },
+      { en: "A lady wearing a purple hat fled quickly.", zh: "一位戴著紫色帽子的女士快速逃跑了。" }
+    ],
+    'C': [
+      { en: "A pair of silver gloves was found.", zh: "現場發現了一雙銀色的手套。" },
+      { en: "The suspect has a dark scar on the left eye.", zh: "嫌疑人的左眼有一道深色的疤痕。" },
+      { en: "A gold pocket watch stopped at midnight.", zh: "一塊金懷錶停在午夜十二點。" },
+      { en: "The culprit wore a neat double suit.", zh: "犯人穿著整齊的雙排扣西裝。" },
+      { en: "A silver glove was lying on the carpet.", zh: "地毯上躺著一隻銀色手套。" },
+      { en: "The murderer had a noticeable facial scar.", zh: "兇手的臉上有明顯的疤痕。" }
+    ]
+  };
+
+  let currentStage = 1;
+  let maxLives = 3;
+  let lives = 3;
+  let stageQueue = [];
+  let queueIndex = 0;
+  let charIndex = 0;
+  let trueCulprit = 'A';
+  let lastCulprit = null;
+  let isGameStarted = false;
+
+  const coverStageEl = document.getElementById('cover-stage');
+  const paperStageEl = document.getElementById('paper-stage');
+  const stageHintEl = document.getElementById('stage-hint');
+  const translationDisplayEl = document.getElementById('translation-display');
+  const targetDisplayEl = document.getElementById('target-display');
+  const cluesSummaryContainerEl = document.getElementById('clues-summary-container');
+  const cluesSummaryListEl = document.getElementById('clues-summary-list');
+  const suspectsGalleryEl = document.getElementById('suspects-gallery');
+  const inkContainerEl = document.getElementById('ink-container');
+  const stageIndicatorEl = document.getElementById('stage-indicator');
+  const livesDisplayEl = document.getElementById('lives-display');
+  const modalEl = document.getElementById('modal');
+  const modalTitleEl = document.getElementById('modal-title');
+  const modalMsgEl = document.getElementById('modal-msg');
+  const modalBtnEl = document.getElementById('modal-btn');
+
+  function getGameStats() {
+    const saved = localStorage.getItem('detective_game_stats');
+    if (saved) return JSON.parse(saved);
+    return { totalGames: 0, wins: 0, losses: 0, history: [] };
+  }
+
+  function saveGameResult(isWin, culpritName) {
+    const stats = getGameStats();
+    stats.totalGames += 1;
+    if (isWin) stats.wins += 1;
+    else stats.losses += 1;
+
+    const timeStr = new Date().toLocaleDateString('zh-TW', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+    stats.history.unshift({
+      date: timeStr,
+      result: isWin ? '破案成功' : '指認失敗',
+      culprit: culpritName
+    });
+    if (stats.history.length > 10) stats.history.pop();
+
+    localStorage.setItem('detective_game_stats', JSON.stringify(stats));
+  }
+
+  function showHistoryModal() {
+    const stats = getGameStats();
+    const winRate = stats.totalGames > 0 ? Math.round((stats.wins / stats.totalGames) * 100) : 0;
+    
+    let historyListHTML = stats.history.length > 0 
+      ? stats.history.map(item => `<div style="font-size:0.85rem; margin:6px 0; color:#4a3423; font-weight:600;">• ${item.date} - <span style="color:${item.result === '破案成功' ? '#1c6821' : '#b83422'};">${item.result}</span> (真兇: ${item.culprit})</div>`).join('')
+      : '<div style="font-size:0.85rem; color:#8c8275; margin-top:10px;">尚無紀錄，開始你的第一宗案件吧！</div>';
+
+    const modalContentHTML = `
+      <div class="stats-grid">
+        <div class="stat-box"><div class="stat-value">${stats.totalGames}</div><div class="stat-label">總接案數</div></div>
+        <div class="stat-box"><div class="stat-value">${stats.wins}</div><div class="stat-label">破獲次數</div></div>
+        <div class="stat-box"><div class="stat-value">${winRate}%</div><div class="stat-label">破案率</div></div>
+      </div>
+      <div style="text-align:left; max-height:140px; overflow-y:auto; padding-top:4px;">
+        <strong style="color:#2b1a0e; font-size:0.95rem;">📜 最近偵案日誌：</strong>
+        ${historyListHTML}
+      </div>
+    `;
+
+    showModal("🕵️ 偵查日誌與戰績", modalContentHTML);
+  }
+
+  function startGameFromCover() {
+    isGameStarted = true;
+    coverStageEl.style.display = 'none';
+    paperStageEl.style.display = 'flex';
+    stageIndicatorEl.style.display = 'block';
+    livesDisplayEl.style.display = 'flex';
+    initGame();
+  }
+
+  function showCoverScreen() {
+    isGameStarted = false;
+    coverStageEl.style.display = 'flex';
+    paperStageEl.style.display = 'none';
+    stageIndicatorEl.style.display = 'none';
+    livesDisplayEl.style.display = 'none';
+  }
+
+  function initGame() {
+    currentStage = 1;
+    startStage(1);
+  }
+
+  function startStage(stage) {
+    currentStage = stage;
+    maxLives = (stage === 3) ? 5 : 3;
+    lives = maxLives;
+    
+    renderInkBottles();
+    updateLivesUI();
+    queueIndex = 0;
+    charIndex = 0;
+
+    stageIndicatorEl.innerText = `關卡: ${currentStage} / 3`;
+    targetDisplayEl.style.display = 'block';
+    cluesSummaryContainerEl.style.display = 'none';
+    suspectsGalleryEl.style.display = 'none';
+
+    if (stage === 1) {
+      stageHintEl.innerText = "第一關：現場搜證（請敲擊對應小寫字母，目標 10 個）";
+      translationDisplayEl.style.display = 'none';
+      stageQueue = [...poolStage1].sort(() => 0.5 - Math.random()).slice(0, 10);
+      showModal("第一關：現場搜證", "請迅速敲擊打字機標記散落現場的字母證物。");
+    } else if (stage === 2) {
+      stageHintEl.innerText = "第二關：證詞整理（請精確拼寫單字，目標 10 個）";
+      translationDisplayEl.style.display = 'inline-block';
+      stageQueue = [...poolStage2].sort(() => 0.5 - Math.random()).slice(0, 10);
+      showModal("第二關：證詞整理", "很好！接下來請整理嫌疑人的筆錄單字（上方附有中文翻譯）。");
+    } else if (stage === 3) {
+      stageHintEl.innerText = "第三關：結案線索（請完整輸入線索句子，目標 5 句 | 墨水上限提升至 5 瓶！）";
+      translationDisplayEl.style.display = 'inline-block';
+      
+      const keys = ['A', 'B', 'C'].filter(k => k !== lastCulprit);
+      trueCulprit = keys[Math.floor(Math.random() * keys.length)];
+      lastCulprit = trueCulprit;
+
+      stageQueue = [...cluesData[trueCulprit]].sort(() => 0.5 - Math.random()).slice(0, 5);
+      showModal("第三關：結案線索", "這是最後的推理審訊！句子與翻譯中藏有真兇的關鍵特徵，本關為您備妥 5 瓶墨水，請精確打出！");
+    }
+    renderTarget();
+  }
+
+  function renderInkBottles() {
+    inkContainerEl.innerHTML = '';
+    for (let i = 1; i <= maxLives; i++) {
+      const bottle = document.createElement('span');
+      bottle.className = 'ink-bottle';
+      bottle.id = `ink${i}`;
+      inkContainerEl.appendChild(bottle);
+    }
+  }
+
+  function renderTarget() {
+    const currentItem = stageQueue[queueIndex];
+    if (!currentItem) return;
+
+    if (currentStage === 1) {
+      targetDisplayEl.innerHTML = currentItem;
+    } else {
+      translationDisplayEl.innerText = `💡 翻譯提示：${currentItem.zh}`;
+
+      const currentTarget = currentItem.en;
+      let html = '';
+      for (let i = 0; i < currentTarget.length; i++) {
+        if (i < charIndex) {
+          html += `<span class="char-correct">${currentTarget[i]}</span>`;
+        } else if (i === charIndex) {
+          html += `<span class="char-current">${currentTarget[i] === ' ' ? '&nbsp;' : currentTarget[i]}</span>`;
+        } else {
+          html += `<span class="char-pending">${currentTarget[i]}</span>`;
+        }
+      }
+      targetDisplayEl.innerHTML = html;
+    }
+  }
+
+  function updateLivesUI() {
+    for (let i = 1; i <= maxLives; i++) {
+      const bottle = document.getElementById(`ink${i}`);
+      if (bottle) {
+        if (i <= lives) {
+          bottle.classList.remove('empty');
+        } else {
+          bottle.classList.add('empty');
+        }
+      }
+    }
+  }
+
+  function handleTyping(key) {
+    if (!isGameStarted) return;
+    const currentItem = stageQueue[queueIndex];
+    if (!currentItem) return;
+
+    const currentTarget = currentStage === 1 ? currentItem : currentItem.en;
+    let expectedChar = currentStage === 1 ? currentTarget : currentTarget[charIndex];
+
+    if (key === expectedChar) {
+      playClack();
+      highlightKey(key);
+
+      if (currentStage === 1) {
+        queueIndex++;
+        if (queueIndex >= stageQueue.length) {
+          nextStage();
+        } else {
+          renderTarget();
+        }
+      } else {
+        charIndex++;
+        if (charIndex >= currentTarget.length) {
+          queueIndex++;
+          charIndex = 0;
+          if (queueIndex >= stageQueue.length) {
+            if (currentStage === 2) {
+              nextStage();
+            } else if (currentStage === 3) {
+              enterDeductionPhase();
+            }
+          } else {
+            renderTarget();
+          }
+        } else {
+          renderTarget();
+        }
+      }
+    } else {
+      playError();
+      document.getElementById('game-container').classList.add('shake');
+      setTimeout(() => document.getElementById('game-container').classList.remove('shake'), 200);
+
+      lives--;
+      updateLivesUI();
+
+      if (lives <= 0) {
+        showModal("墨水耗盡！", `該關卡記錄中斷，請重試第 ${currentStage} 關。`, () => {
+          startStage(currentStage);
+        });
+      }
+    }
+  }
+
+  function nextStage() {
+    if (currentStage === 1) startStage(2);
+    else if (currentStage === 2) startStage(3);
+  }
+
+  function enterDeductionPhase() {
+    targetDisplayEl.style.display = 'none';
+    translationDisplayEl.style.display = 'none';
+    
+    // 生成並顯示線索統整筆記
+    cluesSummaryListEl.innerHTML = stageQueue.map((item, idx) => 
+      `<li>${idx + 1}. <strong>${item.en}</strong><br><span style="color: #7a2818; margin-left: 15px;">🔍 ${item.zh}</span></li>`
+    ).join('');
+    cluesSummaryContainerEl.style.display = 'block';
+
+    suspectsGalleryEl.style.display = 'grid';
+    stageHintEl.innerText = "🕵️ 最終指認：對照上方搜集到的線索筆記，點擊選擇真正的兇手！";
+  }
+
+  function chooseCulprit(selected) {
+    const culpritNames = { 'A': '男爵', 'B': '夫人', 'C': '管家' };
+
+    if (selected === trueCulprit) {
+      saveGameResult(true, culpritNames[trueCulprit]);
+      showModal("🎉 案件破獲！", `太棒了！你的推理與打字能力完全正確，成功逮捕了【${culpritNames[trueCulprit]}】！你是不折不扣的神探！`, () => {
+        showCoverScreen();
+      });
+    } else {
+      saveGameResult(false, culpritNames[trueCulprit]);
+      showModal("❌ 指認錯誤！", `糟糕！指認錯人了，真正的兇手是【${culpritNames[trueCulprit]}】，他已趁亂逃脫...請重新開始案件。`, () => {
+        showCoverScreen();
+      });
+    }
+  }
+
+  function highlightKey(key) {
+    let keyId = `key-${key.toLowerCase()}`;
+    if (key === ' ') keyId = 'key-space';
+    if (key === '.') keyId = 'key-dot';
+
+    const el = document.getElementById(keyId);
+    if (el) {
+      el.classList.add('active');
+      setTimeout(() => el.classList.remove('active'), 100);
+    }
+  }
+
+  function showModal(title, msg, onBtnClick = null) {
+    modalTitleEl.innerText = title;
+    modalMsgEl.innerHTML = msg;
+    modalEl.style.display = 'flex';
+    modalBtnEl.onclick = () => {
+      modalEl.style.display = 'none';
+      if (onBtnClick) onBtnClick();
+    };
+  }
+
+  function closeModal() {
+    modalEl.style.display = 'none';
+  }
+
+  window.addEventListener('keydown', (e) => {
+    if (modalEl.style.display === 'flex') return;
+    if (e.key === 'Shift' || e.key === 'Control' || e.key === 'Alt' || e.key === 'Meta') return;
+    handleTyping(e.key);
+  });
+</script>
+</body>
+</html>
